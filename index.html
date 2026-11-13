@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>شفرة النظام – إلهنا إله نظام</title>
+<style>
+:root{
+  --bg0:#040916;--bg1:#0a1330;--panel:#0d1838;--panel2:#142252;--line:#27396f;
+  --gold:#f5b942;--gold2:#ffdf9a;--blue:#3aa8ff;--blue2:#8fd0ff;
+  --ink:#f4efe2;--mute:#a9b6d8;--ok:#43dba0;--bad:#ff6b6b;--warn:#ffb44a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html{font-size:clamp(15px,.55vw + 11px,22px)}
+body{min-height:100vh;font-family:"Noto Kufi Arabic","Cairo","Segoe UI",Tahoma,"Noto Naskh Arabic",system-ui,sans-serif;color:var(--ink);background:var(--bg0);line-height:1.75;overflow-x:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+:focus-visible{outline:3px solid var(--blue2);outline-offset:2px}
+
+.bg{position:fixed;inset:0;z-index:-1;
+  background:
+   radial-gradient(60% 42% at 50% -6%,rgba(245,185,66,.30),transparent 70%),
+   radial-gradient(50% 40% at 100% 100%,rgba(58,168,255,.20),transparent 70%),
+   radial-gradient(40% 40% at 0% 78%,rgba(58,168,255,.10),transparent 70%),
+   linear-gradient(180deg,var(--bg1),var(--bg0))}
+.bg::after{content:"";position:absolute;inset:0;opacity:.7;
+  background-image:
+   radial-gradient(1.4px 1.4px at 8% 18%,#fff9,transparent),radial-gradient(1.2px 1.2px at 22% 64%,#fff7,transparent),
+   radial-gradient(1.6px 1.6px at 37% 32%,#ffe9b8cc,transparent),radial-gradient(1.2px 1.2px at 51% 80%,#fff7,transparent),
+   radial-gradient(1.4px 1.4px at 66% 14%,#fff9,transparent),radial-gradient(1.2px 1.2px at 78% 52%,#bfe3ffaa,transparent),
+   radial-gradient(1.6px 1.6px at 91% 36%,#fff9,transparent),radial-gradient(1.2px 1.2px at 14% 90%,#fff6,transparent),
+   radial-gradient(1.2px 1.2px at 58% 48%,#fff6,transparent),radial-gradient(1.4px 1.4px at 95% 88%,#ffe9b8aa,transparent)}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;padding:.8rem clamp(.8rem,3vw,2rem) .2rem;max-width:1200px;margin:0 auto}
+.brand{display:flex;gap:.8rem;align-items:center}
+.sigil{width:2.9rem;height:2.9rem;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;color:#2b1a00;
+  background:radial-gradient(circle at 35% 30%,var(--gold2),var(--gold) 55%,#a56a10);box-shadow:0 0 26px rgba(245,185,66,.55)}
+h1{font-size:clamp(1.35rem,2.6vw,2.1rem);font-weight:800;color:var(--gold2);text-shadow:0 0 20px rgba(245,185,66,.45);line-height:1.2}
+.brand small{display:block;color:var(--blue2);font-size:.72rem;letter-spacing:.12em}
+.hud{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.pill{display:flex;flex-direction:column;gap:.15rem;min-width:11rem;padding:.4rem .9rem;border:1px solid var(--line);border-radius:14px;background:rgba(13,24,56,.8)}
+.pill .l1{display:flex;justify-content:space-between;font-size:.82rem;color:var(--mute)}
+.pill b{color:var(--gold2);font-size:1.05rem}
+.pbar{height:6px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden}
+.pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--gold));transition:width .8s cubic-bezier(.2,.8,.2,1)}
+.ib{width:2.6rem;height:2.6rem;border-radius:12px;border:1px solid var(--line);background:rgba(13,24,56,.8);font-size:1.15rem;display:grid;place-items:center;transition:.2s}
+.ib:hover{border-color:var(--blue);box-shadow:0 0 14px rgba(58,168,255,.4)}
+.ib.off{opacity:.5}
+
+/* journey map */
+.journey{max-width:1200px;margin:.4rem auto 0;padding:0 clamp(.6rem,3vw,2rem)}
+.nodes{display:flex;padding:.6rem 0 .2rem}
+.node{flex:1;position:relative;text-align:center;padding:0 .15rem}
+.node::before{content:"";position:absolute;top:1.7rem;right:50%;left:-50%;height:4px;border-radius:4px;z-index:0;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.14) 0 8px,transparent 8px 16px)}
+.node:last-child::before{display:none}
+.node.open::before{background:repeating-linear-gradient(90deg,var(--blue) 0 8px,transparent 8px 16px);background-size:16px 100%;animation:flow 1s linear infinite;opacity:.8}
+.node.done::before{background:linear-gradient(90deg,var(--gold),var(--gold2));box-shadow:0 0 14px var(--gold);animation:none}
+@keyframes flow{to{background-position:-16px 0}}
+.node button{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:.1rem;width:100%}
+.dot{width:3.4rem;height:3.4rem;border-radius:50%;display:grid;place-items:center;font-size:1.5rem;border:2px solid var(--line);background:var(--panel);transition:.4s}
+.node.locked .dot{filter:grayscale(1);opacity:.55}
+.node.open .dot{border-color:var(--blue);box-shadow:0 0 18px rgba(58,168,255,.55)}
+.node.done .dot{border-color:var(--gold);background:radial-gradient(circle at 35% 30%,#3b2b0c,#1c1405);color:var(--gold2);box-shadow:0 0 20px rgba(245,185,66,.55)}
+.node.here .dot{animation:pulse 2s ease-in-out infinite;transform:scale(1.12)}
+@keyframes pulse{50%{box-shadow:0 0 34px rgba(245,185,66,.8)}}
+.nl{font-weight:700;font-size:.92rem}
+.ne{font-size:.6rem;color:var(--blue2);letter-spacing:.08em}
+.node.locked .nl,.node.locked .ne{color:#6b789d}
+.keys{display:flex;justify-content:center;align-items:center;gap:.5rem;flex-wrap:wrap;margin:.5rem 0 .3rem;font-size:.85rem;color:var(--mute)}
+.kslot{min-width:4.3rem;padding:.1rem .8rem;text-align:center;border-radius:999px;border:1px dashed var(--line);color:#5f6d97}
+.kslot.got{border:1px solid var(--gold);color:var(--gold2);background:rgba(245,185,66,.12);box-shadow:0 0 14px rgba(245,185,66,.4);animation:pop .6s}
+@keyframes pop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+
+/* stage panel */
+.stage{max-width:1200px;margin:.6rem auto 2rem;width:calc(100% - clamp(1rem,5vw,4rem));position:relative;border-radius:26px;padding:clamp(1rem,2.5vw,2rem);
+  background:linear-gradient(180deg,rgba(20,34,82,.88),rgba(8,15,38,.94));border:1px solid var(--line);
+  box-shadow:0 0 0 1px rgba(245,185,66,.12),0 30px 80px rgba(0,0,0,.55),0 0 80px rgba(58,168,255,.1)}
+.stage::before{content:"";position:absolute;top:-1px;right:12%;left:12%;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.enter{animation:enter .55s cubic-bezier(.2,.8,.2,1)}
+@keyframes enter{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.shead{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:.8rem}
+.badge{padding:.05rem .9rem;border-radius:999px;background:rgba(58,168,255,.15);border:1px solid var(--blue);color:var(--blue2);font-size:.85rem}
+h2{font-size:clamp(1.6rem,3.2vw,2.6rem);font-weight:800;color:var(--gold2);line-height:1.3}
+.en{color:var(--blue2);font-size:.8rem;letter-spacing:.14em}
+.mission{display:grid;gap:.5rem;padding:.9rem 1.2rem;margin-bottom:1rem;border-radius:16px;background:rgba(6,12,32,.6);border-right:4px solid var(--gold)}
+.story{font-size:1.1rem}
+.instr{color:var(--blue2);font-size:1rem}
+.fb{margin-top:1rem;padding:.8rem 1.1rem;border-radius:14px;border-right:4px solid var(--blue);background:rgba(58,168,255,.1);font-size:1.05rem;animation:enter .4s}
+.fb.ok{border-color:var(--ok);background:rgba(67,219,160,.1)}
+.fb.warn{border-color:var(--warn);background:rgba(255,180,74,.1)}
+.fb.bad{border-color:var(--bad);background:rgba(255,107,107,.1)}
+.fb ul{margin:.3rem 1.2rem 0}
+.reveal{margin-top:1.1rem;padding:1.1rem 1.3rem;border-radius:20px;border:1px solid var(--gold);background:linear-gradient(160deg,rgba(245,185,66,.14),rgba(58,168,255,.07));box-shadow:0 0 40px rgba(245,185,66,.2);animation:enter .6s}
+.reveal h3{color:var(--gold2);font-size:1.15rem;margin-bottom:.2rem}
+.take{margin:.8rem 0;font-size:clamp(1.25rem,2.4vw,1.8rem);font-weight:800;line-height:1.6;color:#fff;text-shadow:0 0 24px rgba(245,185,66,.5)}
+.take cite{display:block;font-size:.85rem;font-weight:400;color:var(--gold);font-style:normal}
+.keyget{display:inline-flex;gap:.6rem;align-items:center;padding:.3rem 1rem;border-radius:999px;background:rgba(245,185,66,.16);border:1px solid var(--gold);color:var(--gold2)}
+.keyget b{font-size:1.3rem}
+.actions{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--line)}
+.row{display:flex;gap:.7rem;flex-wrap:wrap;margin-top:1rem;align-items:center}
+.btn{padding:.65rem 1.6rem;border-radius:999px;font-weight:700;font-size:1.05rem;transition:.2s;border:1px solid transparent}
+.btn.gold{background:linear-gradient(180deg,var(--gold2),var(--gold));color:#2a1a00;box-shadow:0 6px 22px rgba(245,185,66,.35)}
+.btn.blue{background:linear-gradient(180deg,#63bcff,var(--blue));color:#02172e;box-shadow:0 6px 22px rgba(58,168,255,.35)}
+.btn.ghost{border-color:var(--line);background:rgba(255,255,255,.04)}
+.btn.sm{padding:.3rem 1rem;font-size:.85rem}
+.btn:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.1)}
+.btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none}
+.hint{color:var(--mute);font-size:.9rem}
+
+/* intro */
+.intro{text-align:center;padding:clamp(.5rem,3vw,2.2rem) 0}
+.intro .big{font-size:clamp(2.2rem,6vw,4.6rem);font-weight:800;line-height:1.15;color:var(--gold2);text-shadow:0 0 40px rgba(245,185,66,.6)}
+.intro .en{display:block;margin:.4rem 0 1rem}
+.intro p{max-width:46rem;margin:.5rem auto;font-size:1.2rem}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.8rem;max-width:56rem;margin:1.4rem auto}
+.how div{padding:.8rem;border-radius:14px;border:1px solid var(--line);background:rgba(6,12,32,.5);font-size:.95rem}
+.how span{display:block;font-size:1.8rem}
+
+/* stage 1 */
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(17rem,1fr));gap:.8rem}
+.slot{padding:.5rem .6rem .7rem;border-radius:16px;border:1px dashed var(--line);background:rgba(6,12,32,.45);transition:.2s}
+.slot.sel{border:1px solid var(--blue);box-shadow:0 0 22px rgba(58,168,255,.5)}
+.slot.locked{border:1px solid var(--ok);background:rgba(67,219,160,.07)}
+.slot.seventh{border:1px solid var(--gold);background:rgba(245,185,66,.1);box-shadow:0 0 30px rgba(245,185,66,.35);animation:enter .7s}
+.dlabel{display:block;font-size:.8rem;color:var(--mute);margin-bottom:.25rem}
+.ccard{display:flex;align-items:center;gap:.8rem;padding:.65rem .9rem;border-radius:12px;cursor:grab;user-select:none;
+  background:linear-gradient(160deg,var(--panel2),var(--panel));border:1px solid var(--line);font-size:1.1rem;font-weight:700;flex-wrap:wrap}
+.ccard small{flex-basis:100%;font-weight:400;color:var(--ok);font-size:.78rem}
+.slot.locked .ccard{cursor:default}
+.ci{font-size:1.7rem}
+.shake{animation:shake .45s}
+@keyframes shake{20%,60%{transform:translateX(7px)}40%,80%{transform:translateX(-7px)}}
+
+/* stage 2 */
+.match{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:clamp(2.2rem,12vw,9rem)}
+.col{display:grid;gap:.6rem;align-content:start}
+.col h4{color:var(--mute);font-size:.9rem;font-weight:400}
+.mi{display:flex;align-items:center;gap:.6rem;text-align:right;padding:.7rem .9rem;border-radius:14px;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));font-size:1.02rem;font-weight:700;transition:.2s;min-height:3.4rem}
+.mi.fn{font-weight:400;font-size:.95rem;line-height:1.5}
+.mi:hover:not(.ok){border-color:var(--blue2)}
+.mi.sel{border-color:var(--blue);box-shadow:0 0 20px rgba(58,168,255,.6);background:rgba(58,168,255,.15)}
+.mi.ok{border-color:var(--pc);box-shadow:0 0 16px var(--pc);cursor:default;background:rgba(255,255,255,.06)}
+.mic{font-size:1.4rem}
+.lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.lines path{fill:none;stroke-width:3.5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:0;animation:draw .8s ease-out}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+
+/* stage 3 */
+.s3{display:grid;grid-template-columns:15rem 1fr;gap:1.2rem;align-items:start}
+.ringwrap{display:grid;gap:.6rem;justify-items:center;position:sticky;top:.5rem}
+.ring{width:13rem;aspect-ratio:1;border-radius:50%;position:relative;background:rgba(255,255,255,.08);box-shadow:0 0 40px rgba(58,168,255,.25);transition:background .3s}
+.ring::after{content:"";position:absolute;inset:20%;border-radius:50%;background:var(--panel)}
+.rc{position:absolute;inset:0;z-index:1;display:grid;place-content:center;text-align:center}
+.rc b{font-size:2.4rem;color:var(--gold2);line-height:1.1}
+.rc small{color:var(--mute);font-size:.75rem}
+.rows{display:grid;gap:.45rem}
+.arow{display:grid;grid-template-columns:2.6rem 1fr auto;gap:.7rem;align-items:center;padding:.45rem .7rem;border-radius:14px;border:1px solid var(--line);background:rgba(6,12,32,.45);transition:.2s}
+.arow.ok{border-color:var(--ok);background:rgba(67,219,160,.08)}
+.arow.warn{border-color:var(--warn);background:rgba(255,180,74,.09)}
+.ai{width:2.4rem;height:2.4rem;border-radius:50%;display:grid;place-items:center;font-size:1.2rem;background:var(--c);box-shadow:0 0 12px var(--c)}
+.an b{display:block;line-height:1.3}
+.an small{display:block;color:var(--mute);font-size:.8rem;line-height:1.4}
+.arow.ok .an small{color:var(--ok)}.arow.warn .an small{color:var(--warn)}
+.step{display:flex;align-items:center;gap:.35rem}
+.step button{width:2.2rem;height:2.2rem;border-radius:10px;border:1px solid var(--line);background:var(--panel2);font-size:1.2rem;font-weight:800}
+.step button:hover{border-color:var(--gold)}
+.step output{min-width:3.4rem;text-align:center;font-weight:800;color:var(--gold2)}
+.step output small{font-size:.65rem;color:var(--mute);font-weight:400;margin-right:.2rem}
+
+/* stage 4 */
+.s4top{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.7rem}
+.dots{display:flex;gap:.4rem}.dots i{width:.8rem;height:.8rem;border-radius:50%;background:rgba(255,255,255,.15)}
+.dots i.on{background:var(--blue);box-shadow:0 0 10px var(--blue)}.dots i.past{background:var(--gold)}
+.meter{display:flex;align-items:center;gap:.6rem;font-size:.85rem;color:var(--mute);min-width:min(100%,19rem)}
+.mbar{flex:1;height:10px;border-radius:9px;background:linear-gradient(90deg,#ff6b6b55,#ffb44a55,#43dba055);overflow:hidden;position:relative}
+.mbar i{position:absolute;top:0;bottom:0;right:0;width:45%;background:linear-gradient(90deg,var(--bad),var(--warn),var(--ok));transition:width 1s cubic-bezier(.2,.8,.2,1);border-radius:9px}
+.scene{padding:1rem 1.2rem;border-radius:20px;border:1px solid var(--line);text-align:center;background:radial-gradient(80% 120% at 50% 0%,rgba(58,168,255,.14),rgba(6,12,32,.6));transition:.6s}
+.scene.good{border-color:var(--ok);background:radial-gradient(80% 120% at 50% 0%,rgba(245,185,66,.2),rgba(67,219,160,.08));box-shadow:0 0 40px rgba(67,219,160,.25)}
+.scene.mid{border-color:var(--warn);background:radial-gradient(80% 120% at 50% 0%,rgba(255,180,74,.15),rgba(6,12,32,.6))}
+.scene.bad{border-color:var(--bad);background:radial-gradient(80% 120% at 50% 0%,rgba(255,107,107,.2),rgba(6,12,32,.6));animation:shake .5s}
+.sicons{font-size:clamp(2.4rem,7vw,4rem);letter-spacing:.3em;line-height:1.3;animation:enter .5s}
+.scene h4{color:var(--gold2);font-size:1.2rem}
+.scene p{font-size:1.12rem;max-width:44rem;margin:.2rem auto}
+.opts{display:grid;gap:.6rem;margin-top:.8rem}
+.opt{padding:.75rem 1.1rem;border-radius:14px;text-align:right;border:1px solid var(--line);background:linear-gradient(160deg,var(--panel2),var(--panel));font-size:1.05rem;transition:.2s}
+.opt:hover:not(:disabled){border-color:var(--blue);transform:translateX(-4px)}
+.opt:disabled{cursor:default}
+.opt.chosen.good{border-color:var(--ok);background:rgba(67,219,160,.14)}
+.opt.chosen.mid{border-color:var(--warn);background:rgba(255,180,74,.12)}
+.opt.chosen.bad{border-color:var(--bad);background:rgba(255,107,107,.12)}
+.opt.dim{opacity:.45}
+.cons{margin-top:.8rem;padding:.8rem 1.1rem;border-radius:14px;background:rgba(6,12,32,.6);border:1px solid var(--line);animation:enter .5s}
+.cons p+p{margin-top:.4rem}.cons b{color:var(--gold2)}
+
+/* stage 5 */
+.verse{font-size:clamp(1.4rem,3.4vw,2.5rem);font-weight:800;text-align:center;line-height:2.1;margin:.6rem 0}
+.blank{min-width:6.5rem;padding:.05rem 1rem;border-radius:12px;border:2px dashed var(--gold);color:var(--gold2);font-size:inherit;font-weight:800;vertical-align:middle;background:rgba(245,185,66,.08);transition:.2s}
+.blank.full{border-style:solid;background:rgba(245,185,66,.18)}
+.blank.good{border-color:var(--ok);color:var(--ok);box-shadow:0 0 24px rgba(67,219,160,.5)}
+.chips{display:flex;justify-content:center;gap:.6rem;flex-wrap:wrap;margin:.8rem 0}
+.chip{padding:.4rem 1.2rem;border-radius:999px;font-size:1.15rem;font-weight:700;border:1px solid var(--blue);background:rgba(58,168,255,.14);transition:.2s}
+.chip:hover:not(:disabled){box-shadow:0 0 18px rgba(58,168,255,.6);transform:translateY(-2px)}
+.chip small{display:block;font-size:.6rem;color:var(--gold2);font-weight:400;line-height:1.1}
+.chip.used{opacity:.25;pointer-events:none}
+.built{min-height:3.6rem;margin:.6rem auto;max-width:48rem;padding:.6rem;border-radius:16px;border:1px dashed var(--gold);display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;background:rgba(245,185,66,.06)}
+.built .chip{border-color:var(--gold);background:rgba(245,185,66,.16)}
+.phase2{margin-top:1.2rem;padding-top:1rem;border-top:1px dashed var(--line);animation:enter .6s}
+.phase2 h4{text-align:center;color:var(--gold2);font-size:1.2rem}
+
+/* finale */
+.finale{text-align:center;animation:enter .8s}
+.crest{font-size:4rem;filter:drop-shadow(0 0 24px var(--gold))}
+.finale h3{font-size:clamp(1.8rem,4vw,3rem);color:var(--gold2);text-shadow:0 0 30px rgba(245,185,66,.6)}
+.finale .vs{margin:.8rem auto;max-width:44rem;padding:.7rem 1rem;border-radius:16px;border:1px solid var(--gold);background:rgba(245,185,66,.08);font-size:clamp(1.2rem,2.6vw,1.8rem);font-weight:800}
+.finale .vs cite{display:block;font-size:.85rem;color:var(--gold);font-weight:400;font-style:normal}
+.msg{max-width:46rem;margin:1rem auto;font-size:clamp(1.1rem,2vw,1.45rem);line-height:1.9}
+.final-keys{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin:.6rem 0}
+.score-big{font-size:1.3rem;color:var(--blue2)}.score-big b{color:var(--gold2);font-size:2rem}
+
+/* facilitator + modal + toast */
+.panel{position:fixed;top:0;bottom:0;left:0;width:min(23rem,92vw);z-index:50;padding:1rem 1.1rem;overflow:auto;background:linear-gradient(180deg,#0f1c46,#070d24);border-right:1px solid var(--gold);box-shadow:0 0 60px #000;transform:translateX(-105%);transition:transform .35s}
+.panel.open{transform:none}
+.panel h3{color:var(--gold2);margin-bottom:.4rem}
+.panel section{margin:.8rem 0;padding-top:.8rem;border-top:1px solid var(--line)}
+.panel .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;margin-top:.4rem}
+.panel .btn{width:100%;margin:.2rem 0;font-size:.9rem;padding:.45rem .8rem}
+.panel .grid .btn{margin:0}
+.panel .ans{margin-top:.5rem;padding:.6rem .8rem;border-radius:12px;background:rgba(255,255,255,.05);font-size:.85rem;line-height:1.6}
+.panel .ans li{margin-right:1.1rem}
+.modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(2,6,18,.8);padding:1rem}
+.box{max-width:26rem;padding:1.4rem;border-radius:20px;border:1px solid var(--gold);background:var(--panel);text-align:center;box-shadow:0 0 60px rgba(245,185,66,.3)}
+.box .row{justify-content:center}
+.toast{position:fixed;bottom:1.2rem;left:50%;transform:translate(-50%,30px);opacity:0;z-index:70;padding:.6rem 1.4rem;border-radius:999px;background:var(--panel2);border:1px solid var(--blue);transition:.3s;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:80}
+
+@media(max-width:760px){
+  .s3{grid-template-columns:1fr}.ringwrap{position:static}
+  .node .ne{display:none}.nl{font-size:.7rem}.dot{width:2.6rem;height:2.6rem;font-size:1.2rem}.node::before{top:1.3rem}
+  .pill{min-width:8rem}
+  .match{gap:2rem}
+  .mi.fn{font-size:.82rem}.mi{padding:.5rem .55rem;font-size:.9rem}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<canvas id="fx"></canvas>
+
+<header class="top">
+  <div class="brand">
+    <div class="sigil" aria-hidden="true">✦</div>
+    <div><h1>شفرة النظام</h1><small>THE ORDER CODE · إلهنا إله نظام</small></div>
+  </div>
+  <div class="hud">
+    <div class="pill" aria-label="التقدم والنقاط">
+      <div class="l1"><span id="stageCount">المرحلة ١ من ٥</span><span><b id="pts">٠</b> نقطة</span></div>
+      <div class="pbar"><i id="pfill"></i></div>
+    </div>
+    <button class="ib" id="btnSound" aria-label="تشغيل أو إيقاف الصوت" title="الصوت">🔊</button>
+    <button class="ib" id="btnGear" aria-label="لوحة المُيسّر" title="لوحة المُيسّر">⚙️</button>
+    <button class="ib" id="btnRestart" aria-label="إعادة اللعبة" title="إعادة اللعبة">↻</button>
+  </div>
+</header>
+
+<section class="journey" aria-label="خريطة الرحلة">
+  <div class="nodes" id="nodes"></div>
+  <div class="keys" id="keys"></div>
+</section>
+
+<main class="stage" id="stage">
+  <div id="intro" class="intro enter" hidden>
+    <div class="big">شفرة النظام</div>
+    <span class="en">THE ORDER CODE</span>
+    <p>الفوضى بعثرت الخريطة، وضاعت الشفرة اللي بتفتح سرّ «إلهنا إله نظام».</p>
+    <p>قدّامك خمس مراحل متّصلة. في كل مرحلة هتكتشف سرّ وتاخد <b>كلمة مفتاح</b>. اجمع الكلمات الأربع… وكمّل الشفرة الأخيرة.</p>
+    <div class="how">
+      <div><span>🧭</span>مرحلة واحدة في كل مرة، ولا تنتقل قبل ما تنجح</div>
+      <div><span>🗝️</span>كل مرحلة تعطيك كلمة تحتاجها في النهاية</div>
+      <div><span>⭐</span>١٠٠ نقطة للرحلة كاملة، والأخطاء تقلّل النقاط شوية</div>
+    </div>
+    <button class="btn gold" id="btnStart">ابدأ الرحلة</button>
+  </div>
+
+  <div id="game" hidden>
+    <div class="shead"><span class="badge" id="sBadge"></span><h2 id="sTitle"></h2><span class="en" id="sEn"></span></div>
+    <div class="mission" id="mission"><p class="story" id="sStory"></p><p class="instr" id="sInstr"></p></div>
+    <div id="play"></div>
+    <div class="fb" id="fb" hidden aria-live="polite"></div>
+    <div class="reveal" id="reveal" hidden></div>
+    <div class="actions" id="actions">
+      <span class="hint" id="nextHint">أكمل المهمة لفتح المرحلة التالية</span>
+      <button class="btn gold" id="btnNext" disabled>المهمة التالية ◀</button>
+    </div>
+  </div>
+</main>
+
+<aside class="panel" id="panel" aria-hidden="true">
+  <div class="row" style="margin-top:0;justify-content:space-between"><h3>لوحة المُيسّر</h3><button class="ib" id="btnClosePanel" aria-label="إغلاق">✕</button></div>
+  <section>
+    <div>النقاط الحالية: <b id="pPts" style="color:var(--gold2)">٠</b></div>
+    <div class="grid">
+      <button class="btn ghost" data-adj="-5">−٥</button><button class="btn ghost" data-adj="-1">−١</button>
+      <button class="btn ghost" data-adj="1">+١</button><button class="btn ghost" data-adj="5">+٥</button>
+    </div>
+    <p class="hint" style="margin-top:.3rem">التعديل اليدوي يضاف إلى مجموع نقاط المراحل.</p>
+  </section>
+  <section>
+    <button class="btn blue" id="pAns">إظهار / إخفاء الإجابات الصحيحة</button>
+    <div class="ans" id="pAnsBox" hidden></div>
+    <button class="btn gold" id="pForce">إكمال المرحلة وفتح التالية</button>
+    <button class="btn ghost" id="pReset">إعادة المرحلة الحالية</button>
+    <button class="btn ghost" id="pRestartAll">إعادة اللعبة كاملة</button>
+  </section>
+</aside>
+
+<div class="modal" id="modal" hidden>
+  <div class="box" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h3 id="mTitle" style="color:var(--gold2)">إعادة اللعبة من البداية؟</h3>
+    <p style="margin:.6rem 0">سيتم مسح كل التقدم والنقاط والكلمات المكتسبة.</p>
+    <div class="row"><button class="btn gold" id="mYes">نعم، ابدأ من جديد</button><button class="btn ghost" id="mNo">إلغاء</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!==undefined)e.innerHTML=h;return e;};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const AR=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+const fmtH=h=>AR(h).replace('.','٫');
+
+/* ---------- state (kept for the active browser session) ---------- */
+const KEY='orderCode.v1';
+const fresh=()=>({started:false,view:0,done:[false,false,false,false,false],pts:[0,0,0,0,0],adj:0,sound:true});
+let S=fresh();
+try{const r=sessionStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&Array.isArray(o.done)&&o.done.length===5)S=Object.assign(fresh(),o);}}catch(e){}
+const save=()=>{try{sessionStorage.setItem(KEY,JSON.stringify(S));}catch(e){}};
+const total=()=>Math.max(0,S.pts.reduce((a,b)=>a+b,0)+S.adj);
+
+/* ---------- sound (Web Audio, no files) ---------- */
+let actx=null;
+function audio(){if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(actx&&actx.state==='suspended')actx.resume();return actx;}
+function tone(f,d,type,v,delay){if(!S.sound)return;const c=audio();if(!c)return;const t=c.currentTime+(delay||0);const o=c.createOscillator(),g=c.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v||.07,t+.02);g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+d+.05);}
+const sfx={
+  tap:()=>tone(540,.07,'triangle',.05),
+  good:()=>[523,659,784].forEach((f,i)=>tone(f,.25,'sine',.07,i*.09)),
+  bad:()=>{tone(210,.25,'sawtooth',.045);tone(150,.3,'sawtooth',.045,.1);},
+  unlock:()=>[392,523,659,784,1047].forEach((f,i)=>tone(f,.35,'triangle',.07,i*.1)),
+  win:()=>[523,659,784,1047,784,1047,1319].forEach((f,i)=>tone(f,.3,'triangle',.08,i*.12))
+};
+
+/* ---------- effects ---------- */
+function burst(big){
+  if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  const cv=$('#fx'),c=cv.getContext('2d');cv.width=innerWidth;cv.height=innerHeight;
+  const cols=['#f5b942','#ffdf9a','#3aa8ff','#8fd0ff','#ffffff'],P=[],n=big?240:80;
+  for(let i=0;i<n;i++)P.push({x:big?Math.random()*innerWidth:innerWidth/2+(Math.random()-.5)*innerWidth*.3,y:big?-20-Math.random()*200:innerHeight*.55,
+    vx:(Math.random()-.5)*(big?4:9),vy:big?Math.random()*3+2:-(Math.random()*9+4),s:Math.random()*7+4,r:Math.random()*6,vr:(Math.random()-.5)*.3,col:cols[i%5],l:0});
+  (function step(){c.clearRect(0,0,cv.width,cv.height);let alive=0;
+    P.forEach(p=>{p.vy+=.12;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.l++;if(p.y<innerHeight+30&&p.l<300){alive++;c.save();c.translate(p.x,p.y);c.rotate(p.r);c.fillStyle=p.col;c.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);c.restore();}});
+    if(alive)requestAnimationFrame(step);else c.clearRect(0,0,cv.width,cv.height);})();
+}
+let toastT;
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),2200);}
+
+/* ---------- content ---------- */
+const C1=[
+ {ic:'💡',t:'النور والظلمة',ref:'تك ١: ٣–٥'},
+ {ic:'☁️',t:'الجلد وفصل المياه',ref:'تك ١: ٦–٨'},
+ {ic:'🌱',t:'اليابسة والبحار والنبات',ref:'تك ١: ٩–١٣'},
+ {ic:'🌙',t:'الشمس والقمر والنجوم',ref:'تك ١: ١٤–١٩'},
+ {ic:'🐟',t:'الطيور والكائنات البحرية',ref:'تك ١: ٢٠–٢٣'},
+ {ic:'🦁',t:'الحيوانات والإنسان',ref:'تك ١: ٢٤–٣١'}
+];
+const M2=[
+ {id:'priest',ic:'✝️',t:'الكاهن',fn:'يقيم القداس ويقدّم الذبيحة ويرفع صلوات الشعب أمام الله',
+  why:'الكاهن يُقام بالصلاة ووضع يد الأسقف لخدمة الأسرار وتقديم الذبيحة. هو لا يصلّي منفرداً، بل يصلّي عن الشعب ومعه.'},
+ {id:'deacon',ic:'📖',t:'الشماس',fn:'يخدم حول المذبح بالقراءات والألحان ويعاون الكاهن',
+  why:'الشماس له خدمة محددة داخل الكنيسة: القراءات والترتيل ومعاونة الكاهن، فتسير الصلاة بلا ارتباك.'},
+ {id:'people',ic:'👥',t:'الشعب',fn:'يشارك بالردود والصلاة بقلب واحد وخشوع',
+  why:'الشعب ليس متفرجاً. يردّ على الكاهن («وليسوع أيضاً»... «ولروحك أيضاً») ويصلّي ويسبّح مع الجماعة.'},
+ {id:'prayer',ic:'🙏',t:'الصلاة',fn:'حديثنا مع الله بالشكر والتسبيح والطلب',
+  why:'الصلاة علاقة حيّة مع الله. وفي الكنيسة نتعلّم أن نصلّي معاً بخشوع وبترتيب.'},
+ {id:'hymns',ic:'🎶',t:'الألحان',fn:'تسبيح مرتّب بألحان الكنيسة يجعل الجماعة صوتاً واحداً',
+  why:'الألحان جزء من الصلاة وليست استعراضاً. نرتّلها معاً في مواضعها فنسبّح الله بروح واحدة.'},
+ {id:'liturgy',ic:'🕊️',t:'القداس الإلهي',fn:'أعظم صلوات الكنيسة وله ترتيب ثابت: ليتورجيا الكلمة ثم المؤمنين',
+  why:'القداس له ترتيب ثابت تسلّمته الكنيسة: ليتورجيا الكلمة ثم ليتورجيا المؤمنين. الترتيب يحمينا من العشوائية ويقودنا للاتحاد بالمسيح.'}
+];
+const A3=[
+ {id:'prayer',ic:'🙏',t:'الصلاة',min:.5,max:2,c:'#c79a2e',lo:'الصلاة محتاجة وقتها الثابت، نصف ساعة على الأقل',hi:'الصلاة جميلة، لكن اليوم فيه مسؤوليات تانية محتاجة وقتها'},
+ {id:'school',ic:'🏫',t:'المدرسة',min:5,max:8,c:'#3a7bd5',lo:'المدرسة مسؤولية يومية، ادّيها وقتها الحقيقي',hi:'ساعات المدرسة محدودة، متاخدش من أوقات تانية'},
+ {id:'study',ic:'✏️',t:'المذاكرة',min:1,max:3.5,c:'#7b5ce0',lo:'المذاكرة محتاجة وقت منتظم كل يوم',hi:'مذاكرة طويلة من غير راحة بتتعب ومبتفيدش'},
+ {id:'bible',ic:'📖',t:'قراءة الإنجيل',min:.5,max:1.5,c:'#d9742f',lo:'ربنا بيكلمنا في الإنجيل، ادّيله وقت كل يوم',hi:'حلو، بس وازن باقي مسؤولياتك'},
+ {id:'family',ic:'🏠',t:'العيلة',min:1,max:4,c:'#2fae8a',lo:'العيلة محتاجة وقت معاك: أكل وكلام وضحك',hi:'جميل، بس مش على حساب باقي الأولويات'},
+ {id:'rest',ic:'🛋️',t:'الراحة',min:1,max:3,c:'#4aa3c9',lo:'الراحة مش كسل، الجسم والعقل محتاجينها',hi:'الراحة الزيادة بتتحول لتأجيل'},
+ {id:'play',ic:'⚽',t:'اللعب',min:.5,max:3,c:'#e0567a',lo:'اللعب حق مشروع، محتاج وقت صغير',hi:'اللعب كتير بياخد من أولويات تانية'},
+ {id:'phone',ic:'📱',t:'الموبايل',min:0,max:2,c:'#8a94b8',lo:'',hi:'الموبايل زاد عن حدّه. مش ممنوع، بس له وقت محدد'},
+ {id:'sleep',ic:'😴',t:'النوم',min:7.5,max:10,c:'#4b4fb5',lo:'النوم الكفاية (٧٫٥ ساعة على الأقل) بيساعدك تركّز وتصحى بنشاط',hi:'النوم الزيادة بياخد من وقت مهم'}
+];
+const ESS=['prayer','bible','school','study','sleep'];
+const SC=[
+ {title:'التأجيل',icons:'📚🎮⏰',setup:'الساعة ٨ مساءً، وعندك واجب لازم يتسلّم بكرة. صاحبك بعتلك: «تعالى نلعب شوية».',
+  opts:[
+   {l:'good',t:'أقسّم الواجب لجزأين، وأخلّص الأصعب الأول (٣٠ دقيقة)، وبعدها ألعب',after:'✅📘🎮',
+    cons:'خلّصت الجزء الصعب بسرعة، وبدأت اللعب وأنت مرتاح من غير قلق. الواجب اتسلّم في معاده.',
+    lesson:'النظام بيبدأ بخطوة صغيرة في وقتها. «الأمين في القليل أمين أيضاً في الكثير» (لو ١٦: ١٠).'},
+   {l:'mid',t:'ألعب ساعة وبعدين أبدأ',after:'🎮⏳😓',
+    cons:'الساعة بقت ساعتين، وبدأت الواجب وأنت تعبان ومستعجل. خلّصته، لكن بجودة أقل.',
+    lesson:'المتعة مش غلط، لكن لما تيجي قبل المسؤولية بتاخد وقتها وزيادة. الأفضل نبدأ بالأهم.'},
+   {l:'bad',t:'أأجّله للصبح قبل المدرسة',after:'😴📚💥',
+    cons:'صحيت متأخر، والواجب ناقص، وبدأ اليوم بتوتر وفوضى.',
+    lesson:'التأجيل بيكبّر المشكلة. اللي بنعمله في وقته بيدّينا سلام.'}]},
+ {title:'التشتّت وقت الصلاة',icons:'⛪📱🗣️',setup:'في وسط صلاة الكنيسة، صاحبك جنبك بيهمس بحكاية، وموبايلك بيرنّ بإشعارات.',
+  opts:[
+   {l:'good',t:'أسكّت الموبايل وأبعده من الأول، وأقول لصاحبي بهدوء: «نكمّل كلامنا بعد الصلاة»',after:'🙏🔕✨',
+    cons:'قدرت أركّز وأصلّي مع الجماعة. صاحبك احترم، وبعد الصلاة اتكلمتوا براحتكم.',
+    lesson:'الخشوع محتاج استعداد قبل الصلاة: نبعد اللي يشتّتنا. «ليكن كل شيء بلياقة وبحسب ترتيب» (١ كو ١٤: ٤٠).'},
+   {l:'mid',t:'أتجاهل صاحبي، وأفضل ماسك الموبايل في إيدي «للاحتياط»',after:'😶📱🙏',
+    cons:'بتبصّ على الشاشة كل شوية، وصلاتك بقت مقطّعة.',
+    lesson:'النية الحلوة محتاجة خطوة عملية. ابعد الموبايل بدل ما تقاوم التشتّت.'},
+   {l:'bad',t:'أرد على صاحبي وأشوف الرسايل',after:'🗣️📱😕',
+    cons:'اللي حواليك اتشتتوا، وأنت ضيّعت جزء من الصلاة وأنت واقف في بيت الله.',
+    lesson:'الخشوع بيحمي صلاتنا وصلاة اللي حوالينا. لبيت الله احترامه.'}]},
+ {title:'الالتزام بالمسؤولية',icons:'🕯️⏰🚪',setup:'أنت مسؤول عن تجهيز نشاط في اجتماع الأسبوع الجاي، وكل مرة بتوصل متأخر.',
+  opts:[
+   {l:'good',t:'أجهّز احتياجاتي من اليوم اللي قبله، وأوصل قبل الميعاد، وأبلّغ مسؤولي لو حصل ظرف طارئ',after:'✅🚪🌟',
+    cons:'النشاط بدأ في معاده، والناس بقت واثقة فيك وبتعتمد عليك.',
+    lesson:'«مطلوب في الوكلاء أن يوجد الإنسان أميناً» (١ كو ٤: ٢). الالتزام بالمواعيد محبة واحترام للخدمة وللناس.'},
+   {l:'mid',t:'أحاول أوصل بدري، بس من غير ما أجهّز حاجة من قبلها',after:'🏃⏰😅',
+    cons:'وصلت في آخر لحظة ومتوتر، ونسيت حاجة مهمة للنشاط.',
+    lesson:'الحماس لوحده مش كفاية. الأمانة محتاجة تحضير مسبق.'},
+   {l:'bad',t:'«هما هيستنّوني، أو حد تاني يتصرف»',after:'🪑⏳😞',
+    cons:'الناس استنّوا، والنشاط اتأخر، واللي حواليك بقوا مش واثقين فيك.',
+    lesson:'التأخير المتكرر بيضيّع وقت غيرنا ويقلّل الثقة. المسؤولية أمانة.'}]},
+ {title:'إدارة الوقت',icons:'📝⚽🎒',setup:'فاضل ٣ أيام على امتحان، وعندك مباراة مع أصحابك، وخدمة يوم الجمعة.',
+  opts:[
+   {l:'good',t:'أعمل جدول بسيط يوزّع المذاكرة على الأيام التلاتة، وأسيب وقت للمباراة والخدمة',after:'🗓️✅⚽',
+    cons:'ذاكرت على مهلك، وروّحت المباراة وأنت مرتاح، وحضرت الخدمة، والامتحان كان أهدى.',
+    lesson:'النظام مش قيود. هو إننا ندّي كل حاجة حقها ووقتها.'},
+   {l:'mid',t:'ألغي كل حاجة وأذاكر ١٢ ساعة كل يوم',after:'📚😵🥱',
+    cons:'تعبت وركّزك قلّ، وضيّعت الخدمة والراحة، ومعلوماتك مش ثابتة.',
+    lesson:'التطرف مش نظام. التوازن بيحافظ على الجسم والعقل والروح.'},
+   {l:'bad',t:'أسيب كل حاجة ليوم الامتحان وأذاكر آخر ليلة',after:'😰🌙📚',
+    cons:'ليلة كاملة من الضغط والسهر، وصحيت مرهق، ومعلومات كتير ضاعت.',
+    lesson:'التأجيل بيجمّع الضغط. التنظيم بيقسّمه على أيام فيبقى خفيف.'}]},
+ {title:'المذاكرة والترفيه',icons:'🎮📖⚖️',setup:'نزلت لعبة جديدة بتحبها، وعندك مادة محتاجة مذاكرة.',
+  opts:[
+   {l:'good',t:'أحدد وقت مذاكرة الأول، وبعدها وقت لعب بمدة معلومة',after:'📖✅🎮',
+    cons:'ذاكرت بتركيز، وبعدها لعبت وأنت مستمتع من غير إحساس بالذنب.',
+    lesson:'النظام مش معناه نلغي المتعة، لكن ندّي كل حاجة حقها ووقتها.'},
+   {l:'mid',t:'أمنع نفسي نهائياً من اللعب لحد ما أخلّص كل المنهج',after:'🚫🎮😕',
+    cons:'ذاكرت، لكن بقيت متضايق ومشتاق، وفي الآخر ممكن تلعب ساعات بدون حدود.',
+    lesson:'الحرمان الكامل مش هو الحل. وقت محدد للترفيه بيخلّي النظام قابل للاستمرار.'},
+   {l:'bad',t:'ألعب لحد ما أتعب، وأذاكر في الوقت اللي يفضل',after:'🎮🌙😴',
+    cons:'اللعب أخد الليل كله، وذاكرت وأنت نعسان وعلى السريع.',
+    lesson:'من غير حدود، الأمور المحبوبة بتاخد مكان الأمور المهمة.'}]}
+];
+const KEYS5=['حكمة','سلام','وقت','تشويش'];
+const V40=['وليكن','كل','شيء','بلياقة','وبحسب','ترتيب'];
+
+const STAGES=[
+ {ar:'سر الخليقة',en:'THE CREATION CODE',ic:'🌅',key:KEYS5[0],
+  story:'الشفرة الأولى مخبّأة في أول صفحات الكتاب المقدس. أيام الخليقة اتبعثرت… ولازم ترجع لمكانها.',
+  instr:'🎯 اضغط على كارت ثم على كارت آخر لتبديل مكانهما (أو اسحب الكارت). رتّب أيام الخليقة الستة من الأول للسادس ثم اضغط «تحقق».',
+  concept:'في تكوين ١ الله خلق بترتيب: فصل النور عن الظلمة، والمياه عن المياه، ثم ملأ كل مكان بما يناسبه، وانتهى بالحيوانات والإنسان. وفي اليوم السابع استراح الله وبارك اليوم وقدّسه (تك ٢: ٢–٣).',
+  take:'ربنا خلق كل شيء بحكمة وترتيب، وكل شيء له مكان ووظيفة.',ref:'تكوين ١–٢',render:renderS1},
+ {ar:'بيت الله',en:'GOD’S HOUSE',ic:'⛪',key:KEYS5[1],
+  story:'مفتاح الشفرة التانية جوّه الكنيسة. كل دور وكل عنصر فيها ليه وظيفة… بس الأوراق اتخلطت.',
+  instr:'🎯 اضغط على عنصر من العمود الأول، ثم اضغط على وظيفته في العمود الثاني لتوصيلهما.',
+  concept:'كنيستنا ليست فوضى ولا عرضاً يؤديه شخص واحد. للقداس ترتيب ثابت، ولكل واحد دور: كاهن وشماس وشعب، مثل أعضاء الجسد الواحد (١ كو ١٢: ١٤). وفي القداس نسمع كثيراً «السلام لجميعكم»: الترتيب في بيت الله يصنع سلاماً.',
+  take:'في بيت الله كل واحد له دور، والكل يصلّي بقلب واحد وبترتيب واحد.',ref:'١ كورنثوس ١٢',render:renderS2},
+ {ar:'سر الوقت',en:'TIME MASTER',ic:'⏳',key:KEYS5[2],
+  story:'الوقت هو الطريق اللي بيوصلك للمفتاح التالت. يوم واحد، ٢٤ ساعة… وإنت اللي بتقرر.',
+  instr:'🎯 وزّع ساعات اليوم على الأنشطة التسعة بالزرّين + و −. لما توزّع ٢٤ ساعة كاملة اضغط «اعرض يومي». مفيش جدول واحد صح، بس فيه توازن.',
+  concept:'لاحظ إن مفيش جدول واحد هو الصح. فيه أكتر من توزيع متوازن: وقت لله، ومسؤولياتك، وعيلتك، وراحتك، ولعبك، وللموبايل حدّ واضح. الأكل داخل وقت العيلة والراحة.',
+  take:'النظام مش معناه إننا نلغي المتعة، لكن ندّي كل حاجة حقها ووقتها.',ref:'',render:renderS3},
+ {ar:'من الفوضى للسلام',en:'CHAOS TO PEACE',ic:'🕊️',key:KEYS5[3],
+  story:'الفوضى بتظهر في مواقف صغيرة كل يوم. قرارك في كل موقف بيغيّر المشهد.',
+  instr:'🎯 اقرأ كل موقف واختر تصرفك. هتشوف النتيجة قدّامك على المشهد وعلى مؤشر السلام.',
+  concept:'الفوضى (التشويش) غالباً بتبدأ من قرارات صغيرة: تأجيل، تشتّت، تأخير، إفراط. والنظام بيبدأ من قرارات صغيرة كمان، في وقتها، بأمانة ومحبة للناس.',
+  take:'القرارات الصغيرة في وقتها بتصنع سلاماً كبيراً.',ref:'لوقا ١٦: ١٠',render:renderS4},
+ {ar:'الشفرة الأخيرة',en:'THE FINAL CODE',ic:'🔐',key:'',
+  story:'الكلمات الأربع معاك. جاه وقت الشفرة الأخيرة، الآية اللي بتلخّص كل الرحلة.',
+  instr:'🎯 اختر الكلمتين الصحيحتين من الكلمات اللي جمعتها (وانتبه، فيه كلمتين مش من رحلتك) وكمّل الآية.',
+  concept:'',take:'',ref:'',render:renderS5}
+];
+
+/* ---------- shell ---------- */
+const mapNodes=$('#nodes'),keysEl=$('#keys'),play=$('#play'),fb=$('#fb'),rv=$('#reveal'),btnNext=$('#btnNext');
+const accessible=i=>i===0||S.done[i-1];
+
+function setFB(m,k){fb.className='fb '+(k||'');fb.innerHTML=m||'';fb.hidden=!m;}
+function hud(){
+  $('#pts').textContent=AR(total());$('#pPts').textContent=AR(total());
+  $('#pfill').style.width=(S.done.filter(Boolean).length/5*100)+'%';
+  $('#stageCount').textContent='المرحلة '+AR(S.view+1)+' من ٥';
+  $('#btnSound').textContent=S.sound?'🔊':'🔇';$('#btnSound').classList.toggle('off',!S.sound);
+}
+function buildMap(){
+  mapNodes.innerHTML='';
+  STAGES.forEach((st,i)=>{
+    const acc=accessible(i),cls=['node'];
+    cls.push(S.done[i]?'done':(acc?'open':'locked'));
+    if(S.started&&S.view===i)cls.push('here');
+    const n=el('div',cls.join(' '));
+    const b=el('button','',`<span class="dot">${S.done[i]?'✔':st.ic}</span><span class="nl">${st.ar}</span><span class="ne">${st.en}</span>`);
+    b.disabled=!S.started||!acc;
+    b.setAttribute('aria-label','المرحلة '+AR(i+1)+': '+st.ar);
+    b.onclick=()=>{sfx.tap();showStage(i);};
+    n.appendChild(b);mapNodes.appendChild(n);
+  });
+  keysEl.innerHTML='<span>مفاتيح الكلمات:</span>';
+  for(let i=0;i<4;i++){keysEl.appendChild(el('span','kslot'+(S.done[i]?' got':''),S.done[i]?STAGES[i].key:'؟'));}
+}
+function makeApi(i){return{feedback:setFB,complete:p=>completeStage(i,p)};}
+
+function showStage(i){
+  S.view=i;save();
+  $('#intro').hidden=true;$('#game').hidden=false;
+  const st=STAGES[i],g=$('#game');g.classList.remove('enter');void g.offsetWidth;g.classList.add('enter');
+  $('#sBadge').textContent='المرحلة '+AR(i+1);$('#sTitle').textContent=st.ar;$('#sEn').textContent=st.en;
+  $('#sStory').textContent=st.story;$('#sInstr').textContent=st.instr;
+  $('#mission').hidden=false;play.innerHTML='';setFB('');rv.hidden=true;rv.innerHTML='';
+  if(S.done[i]){
+    if(i===4){showFinale();}
+    else{play.innerHTML=`<p class="hint">✔ أنهيت هذه المرحلة وكسبت ${AR(S.pts[i])} نقطة.</p>`;showReveal(i,false);}
+  }else{st.render(play,makeApi(i));}
+  buildMap();hud();updateNext();
+}
+function updateNext(){
+  const i=S.view,last=i===4;
+  $('#actions').hidden=last&&S.done[4];
+  btnNext.disabled=!S.done[i];
+  $('#nextHint').textContent=S.done[i]?'المرحلة التالية مفتوحة. اضغط للمتابعة':'أكمل المهمة لفتح المرحلة التالية';
+}
+function showReveal(i,scroll){
+  const st=STAGES[i];
+  rv.innerHTML=`<h3>✨ إيه اللي اكتشفناه؟</h3><p>${st.concept}</p>
+   <div class="take">«${st.take}»${st.ref?`<cite>${st.ref}</cite>`:''}</div>
+   <div class="keyget">🗝️ كلمة المفتاح: <b>${st.key}</b></div>`;
+  rv.hidden=false;
+  if(scroll)setTimeout(()=>rv.scrollIntoView({behavior:'smooth',block:'nearest'}),150);
+}
+function completeStage(i,p){
+  if(S.done[i])return;
+  S.pts[i]=p;S.done[i]=true;save();
+  sfx.unlock();burst(i===4);buildMap();hud();
+  if(i===4){setTimeout(showFinale,900);}
+  else{showReveal(i,true);toast('🗝️ حصلت على كلمة: '+STAGES[i].key);}
+  updateNext();
+}
+btnNext.onclick=()=>{if(S.done[S.view]&&S.view<4){sfx.tap();showStage(S.view+1);window.scrollTo({top:0,behavior:'smooth'});}};
+
+function showFinale(){
+  $('#mission').hidden=true;play.innerHTML='';setFB('');
+  const t=total();
+  const rank=t>=85?'حارس النظام':(t>=60?'صانع السلام':'مستكشف النظام');
+  rv.innerHTML=`<div class="finale"><div class="crest">☀️</div><h3>الشفرة اكتملت!</h3>
+   <div class="vs">«لأن الله ليس إله تشويش بل إله سلام»<cite>١ كورنثوس ١٤: ٣٣</cite></div>
+   <div class="vs">«وليكن كل شيء بلياقة وبحسب ترتيب»<cite>١ كورنثوس ١٤: ٤٠</cite></div>
+   <p class="msg">ربنا مش إله عشوائية أو تشويش، لكنه إله سلام ونظام. والنظام مش معناه إن حياتنا تبقى قيود، لكنه معناه إننا ندّي كل حاجة حقها ووقتها، ونعيش بأمانة ومسؤولية.</p>
+   <div class="final-keys">${KEYS5.map(k=>`<span class="kslot got">${k}</span>`).join('')}</div>
+   <p class="score-big">مجموع النقاط: <b>${AR(t)}</b> من ١٠٠ · رتبتك: ${rank}</p>
+   <p class="hint" style="margin-top:.4rem">النظام مش معناه الكمال، هو خطوات صغيرة بأمانة كل يوم.</p>
+   <div class="row" style="justify-content:center"><button class="btn gold" id="again">العب من جديد</button></div></div>`;
+  rv.hidden=false;
+  $('#again').onclick=()=>askRestart();
+  sfx.win();updateNext();hud();
+  rv.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+/* ---------- STAGE 1 ---------- */
+function renderS1(area,api){
+  const names=['الأول','الثاني','الثالث','الرابع','الخامس','السادس'];
+  let order;do{order=shuffle([0,1,2,3,4,5]);}while(order.every((v,i)=>v===i));
+  const locked=new Set();let sel=null,attempts=0,finished=false,dragFrom=null;
+  area.innerHTML='<div class="slots" id="slots"></div><div class="row"><button class="btn gold" id="chk1">تحقق من الترتيب</button><span class="hint">اليوم السابع هيظهر لما تخلّص الستة</span></div>';
+  const slots=$('#slots',area),chk=$('#chk1',area);
+  function draw(wrong){
+    slots.innerHTML='';
+    order.forEach((cid,i)=>{
+      const c=C1[cid],isL=locked.has(i);
+      const s=el('div','slot'+(isL?' locked':'')+(sel===i?' sel':'')+(wrong&&wrong.includes(i)?' shake':''));
+      s.dataset.i=i;
+      s.innerHTML=`<span class="dlabel">اليوم ${names[i]}</span><div class="ccard"${(isL||finished)?'':' draggable="true"'}><span class="ci">${c.ic}</span><span>${c.t}</span>${isL?`<small>✔ ${c.ref}</small>`:''}</div>`;
+      slots.appendChild(s);
+    });
+    if(finished){slots.appendChild(el('div','slot seventh',`<span class="dlabel">اليوم السابع</span><div class="ccard"><span class="ci">✨</span><span>استراح الله وبارك اليوم وقدّسه</span><small style="color:var(--gold2)">تك ٢: ٢–٣</small></div>`));}
+  }
+  function swap(a,b){[order[a],order[b]]=[order[b],order[a]];}
+  slots.addEventListener('click',e=>{
+    if(finished)return;const s=e.target.closest('.slot');if(!s||s.classList.contains('seventh'))return;
+    const i=+s.dataset.i;if(locked.has(i))return;sfx.tap();
+    if(sel===null)sel=i;else if(sel===i)sel=null;else{swap(sel,i);sel=null;}
+    draw();
+  });
+  slots.addEventListener('dragstart',e=>{const s=e.target.closest('.slot');if(!s)return;dragFrom=+s.dataset.i;try{e.dataTransfer.setData('text/plain',String(dragFrom));e.dataTransfer.effectAllowed='move';}catch(x){}});
+  slots.addEventListener('dragover',e=>{if(dragFrom!==null)e.preventDefault();});
+  slots.addEventListener('drop',e=>{
+    e.preventDefault();const s=e.target.closest('.slot');if(!s||dragFrom===null||s.classList.contains('seventh'))return;
+    const to=+s.dataset.i;if(!locked.has(to)&&!locked.has(dragFrom)&&to!==dragFrom){swap(dragFrom,to);sel=null;sfx.tap();}
+    dragFrom=null;draw();
+  });
+  chk.onclick=()=>{
+    attempts++;let ok=0;const wrong=[];
+    order.forEach((cid,i)=>{if(cid===i){locked.add(i);ok++;}else wrong.push(i);});
+    sel=null;
+    if(ok===6){
+      finished=true;chk.disabled=true;draw();sfx.good();
+      api.feedback('✔ ممتاز! رتّبت أيام الخليقة صح'+(attempts===1?' من أول مرة':' بعد '+AR(attempts)+' محاولات')+'. وفي اليوم السابع استراح الله وبارك اليوم وقدّسه.','ok');
+      api.complete(Math.max(8,20-3*(attempts-1)));
+    }else{
+      draw(wrong);sfx.bad();
+      api.feedback(`${AR(ok)} من ٦ في مكانها الصحيح. ثبّتنا الصح، ورتّب الباقي. فكّر: الله بدأ بإيه؟ وإيه اللي لازم يكون جاهز قبل الكائنات الحيّة؟`,'warn');
+    }
+  };
+  draw();
+}
+
+/* ---------- STAGE 2 ---------- */
+function renderS2(area,api){
+  const colors=['#f5b942','#3aa8ff','#43dba0','#ff8ad8','#b794ff','#ff9a5a'];
+  const fnOrder=shuffle(M2.map(m=>m.id));
+  let a=null,b=null,wrong=0;const pairs=[];
+  area.innerHTML=`<div class="match" id="match"><svg class="lines" id="lines"></svg>
+    <div class="col"><h4>الأدوار والعناصر</h4>${M2.map(m=>`<button class="mi" data-a="${m.id}"><span class="mic">${m.ic}</span>${m.t}</button>`).join('')}</div>
+    <div class="col"><h4>وظيفتها</h4>${fnOrder.map(id=>{const m=M2.find(x=>x.id===id);return`<button class="mi fn" data-b="${id}">${m.fn}</button>`;}).join('')}</div></div>`;
+  const box=$('#match',area);
+  function paint(){$$('.mi',box).forEach(x=>{const isSel=(x.dataset.a!==undefined&&x.dataset.a===a)||(x.dataset.b!==undefined&&x.dataset.b===b);x.classList.toggle('sel',isSel&&!x.classList.contains('ok'));});}
+  function lines(){
+    const svg=$('#lines',area),r=box.getBoundingClientRect();if(!r.width)return;
+    svg.setAttribute('viewBox',`0 0 ${r.width} ${r.height}`);svg.innerHTML='';
+    pairs.forEach(p=>{
+      const A=$(`[data-a="${p.id}"]`,box).getBoundingClientRect(),B=$(`[data-b="${p.id}"]`,box).getBoundingClientRect();
+      const aRight=A.left>B.left;
+      const x1=(aRight?A.left:A.right)-r.left,y1=A.top+A.height/2-r.top,x2=(aRight?B.right:B.left)-r.left,y2=B.top+B.height/2-r.top,mx=(x1+x2)/2;
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d',`M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`);path.setAttribute('pathLength','1');
+      path.style.stroke=p.color;path.style.filter=`drop-shadow(0 0 5px ${p.color})`;svg.appendChild(path);
+    });
+  }
+  const onResize=()=>{if(document.body.contains(box))lines();else window.removeEventListener('resize',onResize);};
+  window.addEventListener('resize',onResize);
+  box.addEventListener('click',e=>{
+    const t=e.target.closest('.mi');if(!t||t.classList.contains('ok'))return;sfx.tap();
+    if(t.dataset.a!==undefined)a=t.dataset.a;else b=t.dataset.b;
+    paint();if(a&&b)evaluate();
+  });
+  function evaluate(){
+    const A=$(`[data-a="${a}"]`,box),B=$(`[data-b="${b}"]`,box);
+    if(a===b){
+      const m=M2.find(x=>x.id===a),color=colors[pairs.length%colors.length];
+      pairs.push({id:a,color});[A,B].forEach(x=>{x.classList.remove('sel');x.classList.add('ok');x.style.setProperty('--pc',color);});
+      lines();sfx.good();
+      if(pairs.length===6){
+        api.feedback(`✔ <b>${m.t}:</b> ${m.why}<br>تم توصيل كل العناصر. الكنيسة كلها نظام وسلام.`,'ok');
+        api.complete(Math.max(8,20-2*wrong));
+      }else api.feedback(`✔ <b>${m.t}:</b> ${m.why}`,'ok');
+    }else{
+      wrong++;sfx.bad();
+      [A,B].forEach(x=>{x.classList.remove('shake');void x.offsetWidth;x.classList.add('shake');});
+      api.feedback('مش دي وظيفته. فكّر تاني: من يقدّم؟ من يخدم؟ من يشارك؟ وما الذي نفعله جميعاً؟','warn');
+    }
+    a=null;b=null;setTimeout(paint,50);
+  }
+}
+
+/* ---------- STAGE 3 ---------- */
+function renderS3(area,api){
+  const v={};A3.forEach(x=>v[x.id]=0);let attempts=0,finished=false;
+  area.innerHTML=`<div class="s3"><div class="ringwrap"><div class="ring" id="ring"><div class="rc"><b id="rem">٢٤</b><small>ساعة متبقية من اليوم</small></div></div>
+    <button class="btn ghost sm" id="draft">ابدأ من يوم تقريبي</button><button class="btn ghost sm" id="zero">مسح الكل</button></div>
+    <div class="rows" id="rows">${A3.map(a=>`<div class="arow" data-id="${a.id}"><span class="ai" style="--c:${a.c}">${a.ic}</span>
+      <div class="an"><b>${a.t}</b><small></small></div>
+      <div class="step"><button data-d="1" aria-label="زيادة نصف ساعة">+</button><output>٠<small>ساعة</small></output><button data-d="-1" aria-label="إنقاص نصف ساعة">−</button></div></div>`).join('')}</div></div>
+    <div class="row"><button class="btn gold" id="chk3" disabled>اعرض يومي</button><span class="hint" id="h3">وزّع ٢٤ ساعة بالكامل (الخطوة نصف ساعة)</span></div>`;
+  const ring=$('#ring',area),rem=$('#rem',area),chk=$('#chk3',area),h3=$('#h3',area);
+  const row=id=>$(`.arow[data-id="${id}"]`,area);
+  function sum(){return A3.reduce((s,a)=>s+v[a.id],0);}
+  function clearStatus(){$$('.arow',area).forEach(r=>{r.classList.remove('ok','warn');$('small',$('.an',r)).textContent='';});}
+  function refresh(){
+    const t=sum(),left=24-t;rem.textContent=fmtH(left);
+    A3.forEach(a=>{$('output',row(a.id)).innerHTML=`${fmtH(v[a.id])}<small>ساعة</small>`;});
+    let acc=0;const segs=[];
+    A3.forEach(a=>{if(v[a.id]>0){segs.push(`${a.c} ${acc/24*360}deg ${(acc+v[a.id])/24*360}deg`);acc+=v[a.id];}});
+    if(acc<24)segs.push(`rgba(255,255,255,.09) ${acc/24*360}deg 360deg`);
+    ring.style.background=`conic-gradient(${segs.join(',')})`;
+    chk.disabled=finished||left!==0;
+    h3.textContent=left>0?`باقي ${fmtH(left)} ساعة لتوزيعها`:(left<0?'زيادة':'اليوم مكتمل ٢٤ ساعة. اضغط «اعرض يومي»');
+  }
+  area.addEventListener('click',e=>{
+    if(finished)return;const b=e.target.closest('.step button');if(!b)return;
+    const id=b.closest('.arow').dataset.id,d=+b.dataset.d*.5;
+    if(d>0&&sum()+d>24){sfx.bad();toast('اليوم ٢٤ ساعة بس! قلّل من نشاط آخر');return;}
+    if(v[id]+d<0)return;
+    v[id]+=d;sfx.tap();clearStatus();setFB('');refresh();
+  });
+  $('#draft',area).onclick=()=>{if(finished)return;Object.assign(v,{prayer:.5,bible:0,school:6,study:1,family:1,rest:1,play:2,phone:4,sleep:8.5});clearStatus();setFB('');refresh();sfx.tap();};
+  $('#zero',area).onclick=()=>{if(finished)return;A3.forEach(a=>v[a.id]=0);clearStatus();setFB('');refresh();sfx.tap();};
+  chk.onclick=()=>{
+    attempts++;
+    const res=A3.map(a=>({a,st:v[a.id]<a.min?'low':(v[a.id]>a.max?'high':'ok')}));
+    const met=res.filter(r=>r.st==='ok').length;
+    const essOk=ESS.every(id=>res.find(r=>r.a.id===id).st==='ok');
+    res.forEach(r=>{const rw=row(r.a.id);rw.classList.remove('ok','warn');rw.classList.add(r.st==='ok'?'ok':'warn');
+      $('small',$('.an',rw)).textContent=r.st==='ok'?'✔ توزيع متوازن':(r.st==='low'?r.a.lo:r.a.hi);});
+    const issues=res.filter(r=>r.st!=='ok');
+    if(met>=7&&essOk){
+      finished=true;chk.disabled=true;sfx.good();
+      api.feedback(`✔ يوم متوازن! ${AR(met)} من ٩ أنشطة في مكانها الصحيح، وخصّصت وقتاً للصلاة والإنجيل والمسؤوليات.`+(issues.length?`<br>ملحوظة صغيرة: ${issues.map(r=>r.a.t).join('، ')} ممكن تتعدّل.`:'')+'<br>وتذكّر: فيه أكتر من جدول صحيح، ده كان واحد منهم.','ok');
+      api.complete(Math.max(8,Math.min(20,Math.round(20*met/9)-2*(attempts-1))));
+    }else{
+      sfx.bad();
+      const lead=!essOk?'الأساسيات (الصلاة، الإنجيل، المدرسة، المذاكرة، النوم) لازم تاخد وقتها الأول.':'قريب جداً، محتاج تعديل بسيط.';
+      api.feedback(`${lead}<ul>${issues.slice(0,4).map(r=>`<li><b>${r.a.t}:</b> ${r.st==='low'?r.a.lo:r.a.hi}</li>`).join('')}</ul>عدّل التوزيع واعرضه تاني.`,'warn');
+    }
+  };
+  refresh();
+}
+
+/* ---------- STAGE 4 ---------- */
+function renderS4(area,api){
+  let i=0,peace=45,gained=0;
+  const val={good:4,mid:2,bad:0},delta={good:14,mid:3,bad:-12};
+  function draw(){
+    const sc=SC[i];
+    area.innerHTML=`<div class="s4"><div class="s4top"><div class="dots">${SC.map((_,k)=>`<i class="${k<i?'past':(k===i?'on':'')}"></i>`).join('')}</div>
+      <div class="meter"><span>فوضى</span><div class="mbar"><i id="mf" style="width:${peace}%"></i></div><span>سلام</span></div></div>
+      <div class="scene" id="scene"><div class="sicons" id="si">${sc.icons}</div><h4>موقف ${AR(i+1)}: ${sc.title}</h4><p>${sc.setup}</p></div>
+      <div class="opts" id="opts"></div><div class="cons" id="cons" hidden></div>
+      <div class="row"><button class="btn blue" id="nx4" hidden></button></div></div>`;
+    const opts=$('#opts',area);
+    shuffle(sc.opts).forEach(o=>{
+      const b=el('button','opt',o.t);
+      b.onclick=()=>choose(o,b);opts.appendChild(b);
+    });
+  }
+  function choose(o,btn){
+    sfx.tap();
+    $$('.opt',area).forEach(b=>{b.disabled=true;if(b!==btn)b.classList.add('dim');});
+    btn.classList.add('chosen',o.l);
+    const scene=$('#scene',area);scene.classList.add(o.l);
+    $('#si',area).textContent=o.after;
+    peace=Math.max(0,Math.min(100,peace+delta[o.l]));$('#mf',area).style.width=peace+'%';
+    gained+=val[o.l];
+    (o.l==='bad'?sfx.bad:sfx.good)();
+    const c=$('#cons',area);
+    c.innerHTML=`<p><b>النتيجة:</b> ${o.cons}</p><p><b>الدرس الروحي والعملي:</b> ${o.lesson}</p>`;c.hidden=false;
+    const nx=$('#nx4',area);nx.hidden=false;
+    const last=i===SC.length-1;
+    nx.textContent=last?'اكتملت المواقف، اكشف السر ◀':'الموقف التالي ◀';
+    nx.onclick=()=>{
+      if(last){
+        setFB(`مؤشر السلام وصل لـ ${AR(peace)}٪. اللي بتختاره كل يوم بيبني السلام أو بيبني الفوضى.`,peace>=60?'ok':'warn');
+        $('#nx4',area).disabled=true;api.complete(gained);
+      }else{i++;setFB('');draw();}
+    };
+  }
+  draw();
+}
+
+/* ---------- STAGE 5 ---------- */
+function renderS5(area,api){
+  const got=KEYS5.filter((k,idx)=>S.done[idx]);
+  const pool=shuffle(Array.from(new Set(got.concat(['خوف','قيود']))));
+  const fills=[null,null];let wrong1=0,wrong2=0,solved=false;
+  area.innerHTML=`<div class="s5"><p class="hint" style="text-align:center">اضغط على كلمة لتوضع في الفراغ، أو اضغط على الفراغ لإرجاع الكلمة</p>
+    <div class="verse">لأن الله ليس إله <button class="blank" data-b="0">؟</button> بل إله <button class="blank" data-b="1">؟</button></div>
+    <div class="chips" id="chips"></div>
+    <div class="row" style="justify-content:center"><button class="btn gold" id="chk5">افتح الشفرة</button><button class="btn ghost" id="clr5">مسح</button></div>
+    <div class="phase2" id="ph2" hidden>
+      <h4>الآية الأخيرة: رتّب الكلمات</h4><p class="hint" style="text-align:center">الشفرة اتفتحت: ١ كورنثوس ١٤: ٣٣. فيه آية تانية في نفس الأصحاح مستنياك.</p>
+      <div class="built" id="built" aria-live="polite"></div><div class="chips" id="chips2"></div>
+      <div class="row" style="justify-content:center"><button class="btn ghost" id="clr6">مسح</button></div></div></div>`;
+  const chips=$('#chips',area),blanks=$$('.blank',area),chk=$('#chk5',area);
+  function drawChips(){
+    chips.innerHTML='';
+    pool.forEach(w=>{
+      const idx=KEYS5.indexOf(w);
+      const b=el('button','chip'+(fills.includes(w)?' used':''),`${w}${idx>-1?`<small>من المرحلة ${AR(idx+1)}</small>`:''}`);
+      b.onclick=()=>{if(solved)return;const k=fills.indexOf(null);if(k===-1){toast('الفراغان ممتلئان، اضغط على فراغ لإرجاع كلمة');return;}fills[k]=w;sfx.tap();drawBlanks();drawChips();};
+      chips.appendChild(b);
+    });
+  }
+  function drawBlanks(){blanks.forEach((b,k)=>{b.textContent=fills[k]||'؟';b.classList.toggle('full',!!fills[k]);});}
+  blanks.forEach((b,k)=>b.onclick=()=>{if(solved||!fills[k])return;fills[k]=null;sfx.tap();drawBlanks();drawChips();});
+  $('#clr5',area).onclick=()=>{if(solved)return;fills[0]=fills[1]=null;drawBlanks();drawChips();};
+  chk.onclick=()=>{
+    if(solved)return;
+    if(!fills[0]||!fills[1]){toast('املأ الفراغين الأول');return;}
+    if(fills[0]==='تشويش'&&fills[1]==='سلام'){
+      solved=true;chk.disabled=true;blanks.forEach(b=>b.classList.add('good'));sfx.good();burst(false);
+      api.feedback('✔ «لأن الله ليس إله <b>تشويش</b> بل إله <b>سلام</b>» (١ كورنثوس ١٤: ٣٣). الله مصدر النظام والسلام، وعكسه التشويش.','ok');
+      $('#ph2',area).hidden=false;startPhase2();
+      setTimeout(()=>$('#ph2',area).scrollIntoView({behavior:'smooth',block:'nearest'}),200);
+    }else{
+      wrong1++;sfx.bad();blanks.forEach(b=>{b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake');});
+      api.feedback(wrong1>=2?'تلميح: الكلمة الأولى عكس السلام، وهي اللي اتعلّمناها لما شفنا الفوضى. والتانية هي اللي سمعناها في القداس.':'مش دي الشفرة. الآية بتقارن بين حالتين: إيه عكس «السلام»؟','warn');
+      fills[0]=fills[1]=null;drawBlanks();drawChips();
+    }
+  };
+  function startPhase2(){
+    let w2;do{w2=shuffle(V40);}while(w2.every((w,k)=>w===V40[k]));
+    const placed=[],built=$('#built',area),c2=$('#chips2',area);let done2=false;
+    function draw2(){
+      built.innerHTML='';placed.forEach((w,k)=>{const b=el('button','chip',w);b.onclick=()=>{if(done2)return;placed.splice(k,1);sfx.tap();draw2();};built.appendChild(b);});
+      c2.innerHTML='';w2.forEach(w=>{const b=el('button','chip'+(placed.includes(w)?' used':''),w);b.onclick=()=>{if(done2)return;placed.push(w);sfx.tap();draw2();if(placed.length===6)check2();};c2.appendChild(b);});
+    }
+    function check2(){
+      if(placed.every((w,k)=>w===V40[k])){
+        done2=true;sfx.good();
+        api.feedback('✔ «وليكن كل شيء بلياقة وبحسب ترتيب» (١ كورنثوس ١٤: ٤٠). الشفرة اكتملت!','ok');
+        api.complete(Math.max(8,14-3*wrong1)+Math.max(3,6-wrong2));
+      }else{
+        wrong2++;sfx.bad();built.classList.remove('shake');void built.offsetWidth;built.classList.add('shake');
+        toast('الترتيب مش مظبوط، حاول تاني');placed.length=0;draw2();
+      }
+    }
+    $('#clr6',area).onclick=()=>{if(done2)return;placed.length=0;draw2();};
+    draw2();
+  }
+  drawBlanks();drawChips();
+}
+
+/* ---------- facilitator ---------- */
+function answersHTML(i){
+  if(i===0)return '<ol>'+C1.map(c=>`<li>${c.t}</li>`).join('')+'</ol><p>+ اليوم السابع: الراحة والبركة والتقديس (تك ٢: ٢–٣)</p>';
+  if(i===1)return '<ul>'+M2.map(m=>`<li><b>${m.t}:</b> ${m.fn}</li>`).join('')+'</ul>';
+  if(i===2)return '<ul>'+A3.map(a=>`<li><b>${a.t}:</b> من ${fmtH(a.min)} إلى ${fmtH(a.max)} ساعة</li>`).join('')+'</ul><p>الأساسيات: الصلاة والإنجيل والمدرسة والمذاكرة والنوم. النجاح = الأساسيات + ٧ من ٩ على الأقل، والمجموع ٢٤ ساعة.</p>';
+  if(i===3)return '<ul>'+SC.map(s=>`<li><b>${s.title}:</b> ${s.opts.find(o=>o.l==='good').t}</li>`).join('')+'</ul>';
+  return '<p>الفراغ الأول: <b>تشويش</b> · الفراغ الثاني: <b>سلام</b> (١ كو ١٤: ٣٣)</p><p>ترتيب الآية: وليكن · كل · شيء · بلياقة · وبحسب · ترتيب (١ كو ١٤: ٤٠)</p>';
+}
+const panel=$('#panel');
+function openPanel(o){panel.classList.toggle('open',o);panel.setAttribute('aria-hidden',o?'false':'true');if(o){$('#pAnsBox').innerHTML=answersHTML(S.view);hud();}}
+$('#btnGear').onclick=()=>openPanel(!panel.classList.contains('open'));
+$('#btnClosePanel').onclick=()=>openPanel(false);
+$('#pAns').onclick=()=>{const b=$('#pAnsBox');b.innerHTML=answersHTML(S.view);b.hidden=!b.hidden;};
+$$('[data-adj]').forEach(b=>b.onclick=()=>{S.adj+=+b.dataset.adj;if(total()===0&&S.adj<0&&S.pts.reduce((a,c)=>a+c,0)+S.adj<0)S.adj=-S.pts.reduce((a,c)=>a+c,0);save();hud();sfx.tap();});
+$('#pForce').onclick=()=>{
+  if(!S.started){startGame();}
+  if(S.done[S.view]){toast('المرحلة مكتملة بالفعل');return;}
+  completeStage(S.view,0);openPanel(false);toast('تم إكمال المرحلة يدوياً');
+};
+$('#pReset').onclick=()=>{
+  if(!S.started)return;
+  S.done[S.view]=false;S.pts[S.view]=0;
+  for(let k=S.view+1;k<5;k++){S.done[k]=false;S.pts[k]=0;}
+  save();showStage(S.view);openPanel(false);toast('تمت إعادة المرحلة');
+};
+$('#pRestartAll').onclick=()=>{openPanel(false);askRestart();};
+
+/* ---------- restart / sound / start ---------- */
+function askRestart(){$('#modal').hidden=false;$('#mYes').focus();}
+$('#btnRestart').onclick=askRestart;
+$('#mNo').onclick=()=>{$('#modal').hidden=true;};
+$('#mYes').onclick=()=>{
+  const snd=S.sound;S=fresh();S.sound=snd;save();$('#modal').hidden=true;
+  setFB('');rv.hidden=true;showIntro();window.scrollTo({top:0,behavior:'smooth'});toast('بدأت لعبة جديدة');
+};
+$('#btnSound').onclick=()=>{S.sound=!S.sound;save();hud();if(S.sound)sfx.tap();};
+function showIntro(){$('#game').hidden=true;$('#intro').hidden=false;buildMap();hud();}
+function startGame(){S.started=true;S.view=0;save();audio();sfx.unlock();showStage(0);}
+$('#btnStart').onclick=startGame;
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){$('#modal').hidden=true;openPanel(false);}});
+
+/* ---------- boot ---------- */
+if(S.started){showStage(Math.min(4,Math.max(0,S.view|0)));}else{showIntro();}
+})();
+</script>
+</body>
+</html>
